@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Noedap</string>
+    <string name="today">Today worked:</string>
+    <string name="this_week">This week:</string>
+    <string name="remaining">Remaining:</string>
+    <string name="enter_hours">Enter work hours</string>
+    <string name="start_time">Start:</string>
+    <string name="end_time">End:</string>
+    <string name="calculate">Calculate</string>
+    <string name="break_info">30 min break required after 6h work</string>
+</resources>

@@ -1,0 +1,25 @@
+# Android
+*.iml
+.idea/
+.gradle/
+build/
+
+# Kotlin
+*.kotlin_module
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Local configuration files
+local.properties
+
+# Windows
+Thumbs.db
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
