@@ -8,8 +8,10 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import dev.whitefire.noedap.NoedapApplication
 import dev.whitefire.noedap.databinding.ActivitySettingsBinding
+import dev.whitefire.noedap.util.formatTime
 import dev.whitefire.noedap.util.showTimePicker
 import kotlinx.coroutines.launch
+import java.time.DayOfWeek
 import java.time.LocalTime
 
 class SettingsActivity : AppCompatActivity() {
@@ -47,26 +49,26 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         binding.btnMonStart.setOnClickListener {
-            showTimePicker(binding.btnMonStart, viewModel.config.value?.coreTimes?.get(java.time.DayOfWeek.MONDAY)?.start ?: LocalTime.of(9, 30)) { time ->
-                viewModel.setCoreTime(java.time.DayOfWeek.MONDAY, time, viewModel.config.value?.coreTimes?.get(java.time.DayOfWeek.MONDAY)?.end ?: LocalTime.of(16, 0))
+            showTimePicker(binding.btnMonStart, viewModel.config.value?.coreTimes?.get(DayOfWeek.MONDAY)?.start ?: LocalTime.of(9, 30)) { time ->
+                viewModel.setCoreTime(DayOfWeek.MONDAY, time, viewModel.config.value?.coreTimes?.get(DayOfWeek.MONDAY)?.end ?: LocalTime.of(16, 0))
             }
         }
 
         binding.btnMonEnd.setOnClickListener {
-            showTimePicker(binding.btnMonEnd, viewModel.config.value?.coreTimes?.get(java.time.DayOfWeek.MONDAY)?.end ?: LocalTime.of(16, 0)) { time ->
-                viewModel.setCoreTime(java.time.DayOfWeek.MONDAY, viewModel.config.value?.coreTimes?.get(java.time.DayOfWeek.MONDAY)?.start ?: LocalTime.of(9, 30), time)
+            showTimePicker(binding.btnMonEnd, viewModel.config.value?.coreTimes?.get(DayOfWeek.MONDAY)?.end ?: LocalTime.of(16, 0)) { time ->
+                viewModel.setCoreTime(DayOfWeek.MONDAY, viewModel.config.value?.coreTimes?.get(DayOfWeek.MONDAY)?.start ?: LocalTime.of(9, 30), time)
             }
         }
 
         binding.btnFriStart.setOnClickListener {
-            showTimePicker(binding.btnFriStart, viewModel.config.value?.coreTimes?.get(java.time.DayOfWeek.FRIDAY)?.start ?: LocalTime.of(9, 30)) { time ->
-                viewModel.setCoreTime(java.time.DayOfWeek.FRIDAY, time, viewModel.config.value?.coreTimes?.get(java.time.DayOfWeek.FRIDAY)?.end ?: LocalTime.of(12, 30))
+            showTimePicker(binding.btnFriStart, viewModel.config.value?.coreTimes?.get(DayOfWeek.FRIDAY)?.start ?: LocalTime.of(9, 30)) { time ->
+                viewModel.setCoreTime(DayOfWeek.FRIDAY, time, viewModel.config.value?.coreTimes?.get(DayOfWeek.FRIDAY)?.end ?: LocalTime.of(12, 30))
             }
         }
 
         binding.btnFriEnd.setOnClickListener {
-            showTimePicker(binding.btnFriEnd, viewModel.config.value?.coreTimes?.get(java.time.DayOfWeek.FRIDAY)?.end ?: LocalTime.of(12, 30)) { time ->
-                viewModel.setCoreTime(java.time.DayOfWeek.FRIDAY, viewModel.config.value?.coreTimes?.get(java.time.DayOfWeek.FRIDAY)?.start ?: LocalTime.of(9, 30), time)
+            showTimePicker(binding.btnFriEnd, viewModel.config.value?.coreTimes?.get(DayOfWeek.FRIDAY)?.end ?: LocalTime.of(12, 30)) { time ->
+                viewModel.setCoreTime(DayOfWeek.FRIDAY, viewModel.config.value?.coreTimes?.get(DayOfWeek.FRIDAY)?.start ?: LocalTime.of(9, 30), time)
             }
         }
     }
@@ -93,10 +95,10 @@ class SettingsActivity : AppCompatActivity() {
         binding.etBreakAfter.setText(config.breakRules.firstOrNull()?.afterHours?.toString() ?: "6")
         binding.etBreakDuration.setText(config.breakRules.firstOrNull()?.durationHours?.toString() ?: "0.5")
 
-        binding.btnMonStart.text = config.coreTimes[java.time.DayOfWeek.MONDAY]?.start?.formatTime() ?: "09:30"
-        binding.btnMonEnd.text = config.coreTimes[java.time.DayOfWeek.MONDAY]?.end?.formatTime() ?: "16:00"
-        binding.btnFriStart.text = config.coreTimes[java.time.DayOfWeek.FRIDAY]?.start?.formatTime() ?: "09:30"
-        binding.btnFriEnd.text = config.coreTimes[java.time.DayOfWeek.FRIDAY]?.end?.formatTime() ?: "12:30"
+        binding.btnMonStart.text = config.coreTimes[DayOfWeek.MONDAY]?.start?.formatTime() ?: "09:30"
+        binding.btnMonEnd.text = config.coreTimes[DayOfWeek.MONDAY]?.end?.formatTime() ?: "16:00"
+        binding.btnFriStart.text = config.coreTimes[DayOfWeek.FRIDAY]?.start?.formatTime() ?: "09:30"
+        binding.btnFriEnd.text = config.coreTimes[DayOfWeek.FRIDAY]?.end?.formatTime() ?: "12:30"
     }
 
     private fun updateWeeklyTarget() {

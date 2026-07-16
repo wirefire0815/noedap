@@ -12,6 +12,8 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import dev.whitefire.noedap.NoedapApplication
 import dev.whitefire.noedap.databinding.ActivityHistoryBinding
+import dev.whitefire.noedap.databinding.ItemWorkDayBinding
+import dev.whitefire.noedap.domain.model.WorkDay
 import dev.whitefire.noedap.util.formatHours
 import kotlinx.coroutines.launch
 
@@ -60,7 +62,7 @@ class HistoryActivity : AppCompatActivity() {
         }
     }
 
-    private fun updateStats(workDays: List<dev.whitefire.noedap.domain.model.WorkDay>) {
+    private fun updateStats(workDays: List<WorkDay>) {
         val stats = viewModel.getWeekStats(workDays)
         binding.tvTotalHours.text = stats.totalHours.formatHours()
         binding.tvDaysWorked.text = "${stats.daysWorked} days"
@@ -68,11 +70,11 @@ class HistoryActivity : AppCompatActivity() {
 }
 
 class WorkDayAdapter(
-    private val onDeleteClick: (dev.whitefire.noedap.domain.model.WorkDay) -> Unit
-) : androidx.recyclerview.widget.ListAdapter<dev.whitefire.noedap.domain.model.WorkDay, WorkDayViewHolder>(WorkDayDiffCallback()) {
+    private val onDeleteClick: (WorkDay) -> Unit
+) : androidx.recyclerview.widget.ListAdapter<WorkDay, WorkDayViewHolder>(WorkDayDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): WorkDayViewHolder {
-        val binding = dev.whitefire.noedap.databinding.ItemWorkDayBinding.inflate(
+        val binding = ItemWorkDayBinding.inflate(
             LayoutInflater.from(parent.context), parent, false
         )
         return WorkDayViewHolder(binding, onDeleteClick)
@@ -84,11 +86,11 @@ class WorkDayAdapter(
 }
 
 class WorkDayViewHolder(
-    private val binding: dev.whitefire.noedap.databinding.ItemWorkDayBinding,
-    private val onDeleteClick: (dev.whitefire.noedap.domain.model.WorkDay) -> Unit
+    private val binding: ItemWorkDayBinding,
+    private val onDeleteClick: (WorkDay) -> Unit
 ) : androidx.recyclerview.widget.RecyclerView.ViewHolder(binding.root) {
 
-    fun bind(workDay: dev.whitefire.noedap.domain.model.WorkDay) {
+    fun bind(workDay: WorkDay) {
         binding.tvDate.text = workDay.getDateDisplay()
         binding.tvDuration.text = workDay.getDurationString()
         binding.tvNotes.text = workDay.notes.ifEmpty { "No notes" }
@@ -97,12 +99,12 @@ class WorkDayViewHolder(
     }
 }
 
-class WorkDayDiffCallback : androidx.recyclerview.widget.DiffUtil.ItemCallback<dev.whitefire.noedap.domain.model.WorkDay>() {
-    override fun areItemsTheSame(oldItem: dev.whitefire.noedap.domain.model.WorkDay, newItem: dev.whitefire.noedap.domain.model.WorkDay): Boolean {
+class WorkDayDiffCallback : androidx.recyclerview.widget.DiffUtil.ItemCallback<WorkDay>() {
+    override fun areItemsTheSame(oldItem: WorkDay, newItem: WorkDay): Boolean {
         return oldItem.id == newItem.id
     }
 
-    override fun areContentsTheSame(oldItem: dev.whitefire.noedap.domain.model.WorkDay, newItem: dev.whitefire.noedap.domain.model.WorkDay): Boolean {
+    override fun areContentsTheSame(oldItem: WorkDay, newItem: WorkDay): Boolean {
         return oldItem == newItem
     }
 }

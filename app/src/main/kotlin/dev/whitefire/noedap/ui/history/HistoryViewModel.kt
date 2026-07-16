@@ -8,9 +8,7 @@ import dev.whitefire.noedap.domain.model.WorkWeek
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import java.time.LocalDate
 
 class HistoryViewModel(
     private val workDayRepository: WorkDayRepository
@@ -18,9 +16,6 @@ class HistoryViewModel(
 
     private val _workDays = MutableStateFlow<List<WorkDay>>(emptyList())
     val workDays: StateFlow<List<WorkDay>> = _workDays.asStateFlow()
-
-    private val _selectedWeek = MutableStateFlow<WorkWeek?>(null)
-    val selectedWeek: StateFlow<WorkWeek?> = _selectedWeek.asStateFlow()
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
@@ -34,18 +29,6 @@ class HistoryViewModel(
             _isLoading.value = true
             val days = workDayRepository.getRecentWorkDays(50)
             _workDays.value = days.sortedByDescending { it.date }
-            _isLoading.value = false
-        }
-    }
-
-    fun loadWeek(year: Int, week: Int) {
-        viewModelScope.launch {
-            _isLoading.value = true
-            val workWeek = WorkWeek.fromYearWeek(year, week)
-            workWeek?.let {
-                val days = workDayRepository.getWorkWeekForDate(it.startDate)
-                _selectedWeek.value = days
-            }
             _isLoading.value = false
         }
     }
