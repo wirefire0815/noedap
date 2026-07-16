@@ -1,6 +1,5 @@
-rootProject.name = "nit"
-
-pluginManagement {
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
     repositories {
         google()
         mavenCentral()
@@ -8,10 +7,13 @@ pluginManagement {
     }
 }
 
-dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+rootProject.name = "nit"
+
+pluginManagement {
+    includeBuild("gradle")
     repositories {
         google()
         mavenCentral()
+        gradlePluginPortal()
     }
 }
