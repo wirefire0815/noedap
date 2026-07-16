@@ -116,6 +116,34 @@ class MainViewModel(
         }
     }
     
+    /**
+     * Get stats from current week (including preview inputs)
+     */
+    fun getCurrentWeekStatsPreview(): WeekStats {
+        val week = _currentWeek.value ?: return WeekStats(0f, 0f, 0f, false, 0f, 0, 0)
+        val config = _workTimeConfig.value ?: return WeekStats(0f, 0f, 0f, false, 0f, 0, 0)
+        
+        val today = LocalDate.now()
+        val todayWorkDay = week.workDays.firstOrNull { it.date == today }
+        val todayHours = todayWorkDay?.effectiveHours ?: 0f
+        
+        val totalHours = week.totalNetHours
+        val remaining = config.weeklyTargetHours - totalHours
+        val progress = (totalHours / config.weeklyTargetHours * 100f).coerceAtMost(100f)
+        val targetMet = totalHours >= config.weeklyTargetHours
+        val daysWorked = week.workDays.count { it.isComplete }
+        
+        return WeekStats(
+            totalHours = totalHours,
+            remainingHours = remaining,
+            progressPercentage = progress,
+            targetMet = targetMet,
+            todayHours = todayHours,
+            daysWorked = daysWorked,
+            totalDays = week.workDays.size
+        )
+    }
+    
     fun setDate(date: LocalDate) {
         _currentDate.value = date
         viewModelScope.launch {
@@ -338,41 +366,34 @@ class MainViewModel(
         val start = _startTime.value ?: return null
         val currentDate = _currentDate.value
         
-        // Get current week stats
-        val stats = _stats.value ?: return null
-        val remainingHours = stats.remainingHours
+        // Get preview stats from current week
+        val previewStats = getCurrentWeekStatsPreview()
+        val remainingHours = previewStats.remainingHours
         
         if (remainingHours <= 0) return null // Target already met
         
-        // Calculate how many hours needed today
-        val today = LocalDate.now()
-        val todayWorkDay = _currentWeek.value?.workDays?.firstOrNull { it.date == currentDate }
-        val todayWorkedHours = todayWorkDay?.effectiveHours ?: 0f
-        
-        // If we're editing today, use current inputs
-        val currentTodayHours = if (currentDate == today) {
-            _startTime.value?.let { s ->
-                _endTime.value?.let { e ->
-                    val dur = java.time.Duration.between(s, e)
-                    if (!dur.isNegative) (dur.toMinutes() - _breakMinutes.value).toFloat() / 60f
-                    else 0f
-                } ?: 0f
+        // Calculate current today hours from inputs
+        val currentTodayHours = _startTime.value?.let { s ->
+            _endTime.value?.let { e ->
+                val dur = java.time.Duration.between(s, e)
+                if (!dur.isNegative) (dur.toMinutes() - _breakMinutes.value).toFloat() / 60f
+                else 0f
             } ?: 0f
-        } else {
-            todayWorkedHours
-        }
+        } ?: 0f
         
-        val hoursNeededToday = remainingHours - currentTodayHours
-        if (hoursNeededToday <= 0) return null
+        // Calculate hours needed from current today hours
+        val hoursNeededFromNow = remainingHours - currentTodayHours
+        if (hoursNeededFromNow <= 0) return null
         
-        // Calculate leave time: start + hoursNeededToday + break
-        val minutesNeeded = (hoursNeededToday * 60).toInt()
+        // Calculate leave time: start + (currentTodayHours + hoursNeededFromNow) + break
+        val totalHours = currentTodayHours + hoursNeededFromNow
+        val minutesNeeded = (totalHours * 60).toInt()
         val leaveTime = start.plusMinutes(minutesNeeded.toLong())
         
         // Add break if needed
         val breakRule = config.breakRules.firstOrNull()
         breakRule?.let { rule ->
-            if (hoursNeededToday >= rule.afterHours) {
+            if (totalHours >= rule.afterHours) {
                 return leaveTime.plusMinutes((rule.durationHours * 60).toLong())
             }
         }

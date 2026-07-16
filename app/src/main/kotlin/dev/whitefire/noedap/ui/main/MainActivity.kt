@@ -148,6 +148,12 @@ class MainActivity : AppCompatActivity() {
                         config?.let { updateLeaveSuggestion(it) }
                     }
                 }
+                launch {
+                    // Update leave suggestion when week changes
+                    viewModel.currentWeek.collect {
+                        updateLeaveSuggestion(viewModel.workTimeConfig.value)
+                    }
+                }
             }
         }
     }
