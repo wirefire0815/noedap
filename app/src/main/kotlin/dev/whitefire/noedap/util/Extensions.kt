@@ -86,9 +86,25 @@ fun EditText.showTimePicker(
     
     TimePickerDialog(
         context,
-        { _, hourOfDay, minute ->
-            onTimeSelected(LocalTime.of(hourOfDay, minute))
-        },
+        { _, hourOfDay, minute -> onTimeSelected(LocalTime.of(hourOfDay, minute)) },
+        calendar.get(Calendar.HOUR_OF_DAY),
+        calendar.get(Calendar.MINUTE),
+        true
+    ).show()
+}
+
+fun android.widget.Button.showTimePicker(
+    context: Context,
+    initialTime: LocalTime = LocalTime.of(9, 30),
+    onTimeSelected: (LocalTime) -> Unit
+) {
+    val calendar = Calendar.getInstance()
+    calendar.set(Calendar.HOUR_OF_DAY, initialTime.hour)
+    calendar.set(Calendar.MINUTE, initialTime.minute)
+    
+    TimePickerDialog(
+        context,
+        { _, hourOfDay, minute -> onTimeSelected(LocalTime.of(hourOfDay, minute)) },
         calendar.get(Calendar.HOUR_OF_DAY),
         calendar.get(Calendar.MINUTE),
         true
