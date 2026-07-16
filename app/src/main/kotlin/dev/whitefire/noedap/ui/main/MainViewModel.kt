@@ -121,6 +121,7 @@ class MainViewModel(
     
     fun setStartTime(time: LocalTime?) {
         _startTime.value = time
+        updateCurrentWeekWithInputs(_currentWeek.value ?: return)
     }
     
     fun setEndTime(time: LocalTime?) {
@@ -128,6 +129,8 @@ class MainViewModel(
         // Auto-calculate break if enabled
         if (_autoCalculateBreak.value) {
             calculateBreak()
+        } else {
+            updateCurrentWeekWithInputs(_currentWeek.value ?: return)
         }
     }
     
@@ -154,6 +157,25 @@ class MainViewModel(
             }
             
             _breakMinutes.value = totalBreak
+            _currentWeek.value?.let { updateCurrentWeekWithInputs(it) }
+        }
+    }
+    
+    private fun updateCurrentWeekWithInputs(week: WorkWeek) {
+        val currentDate = _currentDate.value
+        val start = _startTime.value
+        val end = _endTime.value
+        val breakMin = _breakMinutes.value
+        
+        if (start != null && end != null && currentDate != null) {
+            val newDay = WorkDay(
+                date = currentDate,
+                startTime = start,
+                endTime = end,
+                breakMinutes = breakMin,
+                notes = ""
+            )
+            _currentWeek.value = week.withWorkDay(newDay)
         }
     }
     
@@ -284,4 +306,111 @@ class MainViewModel(
             String.format("%02d:%02d", grossHours, grossMinutes)
         }
     }
+    
+    /**
+     * Calculate when you can leave today to meet weekly target
+     * Returns LocalTime or null if target already met
+     */
+    fun getSuggestedLeaveTime(): LocalTime? {
+        val config = _workTimeConfig.value ?: return null
+        val start = _startTime.value ?: return null
+        val currentDate = _currentDate.value
+        
+        // Get current week stats
+        val stats = _stats.value ?: return null
+        val remainingHours = stats.remainingHours
+        
+        if (remainingHours <= 0) return null // Target already met
+        
+        // Calculate how many hours needed today
+        val today = LocalDate.now()
+        val todayWorkDay = _currentWeek.value?.workDays?.firstOrNull { it.date == currentDate }
+        val todayWorkedHours = todayWorkDay?.effectiveHours ?: 0f
+        
+        // If we're editing today, use current inputs
+        val currentTodayHours = if (currentDate == today) {
+            _startTime.value?.let { s ->
+                _endTime.value?.let { e ->
+                    val dur = java.time.Duration.between(s, e)
+                    if (!dur.isNegative) (dur.toMinutes() - _breakMinutes.value).toFloat() / 60f
+                    else 0f
+                } ?: 0f
+            } ?: 0f
+        } else {
+            todayWorkedHours
+        }
+        
+        val hoursNeededToday = remainingHours - currentTodayHours
+        if (hoursNeededToday <= 0) return null
+        
+        // Calculate leave time: start + hoursNeededToday + break
+        val minutesNeeded = (hoursNeededToday * 60).toInt()
+        val leaveTime = start.plusMinutes(minutesNeeded.toLong())
+        
+        // Add break if needed
+        val breakRule = config.breakRules.firstOrNull()
+        breakRule?.let { rule ->
+            if (hoursNeededToday >= rule.afterHours) {
+                return leaveTime.plusMinutes((rule.durationHours * 60).toLong())
+            }
+        }
+        
+        return leaveTime
+    }
+    
+    /**
+     * Get suggested hours for remaining days to meet target
+     */
+    fun getSuggestedDailyHours(): Float {
+        val config = _workTimeConfig.value ?: return 0f
+        val stats = _stats.value ?: return 0f
+        val currentDate = _currentDate.value
+        
+        if (stats.remainingHours <= 0) return 0f
+        
+        // Count remaining work days in week (Mon-Fri)
+        val week = _currentWeek.value ?: return 0f
+        val remainingDays = (1..5).count { dayOfWeek ->
+            val date = week.startDate.plusDays(dayOfWeek.toLong() - 1)
+            date >= currentDate && date.dayOfWeek.value in 1..5
+        }
+        
+        if (remainingDays <= 0) return 0f
+        
+        return stats.remainingHours / remainingDays
+    }
+    
+    /**
+     * Get distribution of hours across week
+     */
+    fun getWeekDistribution(): List<DayDistribution> {
+        val week = _currentWeek.value ?: return emptyList()
+        val stats = _stats.value ?: return emptyList()
+        
+        val days = mutableListOf<DayDistribution>()
+        val startDate = week.startDate
+        
+        for (i in 0..6) {
+            val date = startDate.plusDays(i.toLong())
+            val dayOfWeek = date.dayOfWeek
+            
+            // Skip weekends by default
+            if (dayOfWeek.value > 5) continue
+            
+            val workDay = week.workDays.firstOrNull { it.date == date }
+            val hours = workDay?.effectiveHours ?: 0f
+            val isPast = date.isBefore(LocalDate.now())
+            
+            days.add(DayDistribution(date, dayOfWeek, hours, isPast))
+        }
+        
+        return days
+    }
+    
+    data class DayDistribution(
+        val date: LocalDate,
+        val dayOfWeek: java.time.DayOfWeek,
+        val hours: Float,
+        val isPast: Boolean
+    )
 }

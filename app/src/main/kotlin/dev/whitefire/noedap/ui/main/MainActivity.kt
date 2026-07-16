@@ -1,7 +1,6 @@
 package dev.whitefire.noedap.ui.main
 
 import android.os.Bundle
-import android.view.View
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Lifecycle
@@ -9,7 +8,10 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import dev.whitefire.noedap.NoedapApplication
 import dev.whitefire.noedap.databinding.ActivityMainBinding
+import dev.whitefire.noedap.ui.history.HistoryActivity
+import dev.whitefire.noedap.ui.settings.SettingsActivity
 import dev.whitefire.noedap.util.formatHours
+import dev.whitefire.noedap.util.formatShortDate
 import dev.whitefire.noedap.util.showTimePicker
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -38,14 +40,14 @@ class MainActivity : AppCompatActivity() {
         binding.etStartTime.setOnClickListener {
             it.showTimePicker(this, viewModel.startTime.value ?: LocalTime.of(9, 30)) { time ->
                 viewModel.setStartTime(time)
-                updateTimeDisplay()
+                updateCalculations()
             }
         }
 
         binding.etEndTime.setOnClickListener {
             it.showTimePicker(this, viewModel.endTime.value ?: LocalTime.of(16, 0)) { time ->
                 viewModel.setEndTime(time)
-                updateTimeDisplay()
+                updateCalculations()
             }
         }
 
@@ -55,6 +57,14 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.btnDelete.setOnClickListener {
+            viewModel.setStartTime(null)
+            viewModel.setEndTime(null)
+            viewModel.setBreakMinutes(0)
+            binding.etNotes.setText("")
+            showToast("Cleared")
+        }
+
+        binding.btnDeleteEntry.setOnClickListener {
             viewModel.deleteWorkDay()
             showToast("Deleted")
         }
@@ -71,8 +81,19 @@ class MainActivity : AppCompatActivity() {
             viewModel.setDate(LocalDate.now())
         }
 
-        binding.switchAutoBreak.setOnCheckedChangeListener { _, isChecked ->
-            viewModel.setAutoCalculateBreak(isChecked)
+        binding.bottomNav.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.nav_main -> true
+                R.id.nav_history -> {
+                    startActivity(android.content.Intent(this, HistoryActivity::class.java))
+                    true
+                }
+                R.id.nav_settings -> {
+                    startActivity(android.content.Intent(this, SettingsActivity::class.java))
+                    true
+                }
+                else -> false
+            }
         }
     }
 
@@ -82,19 +103,18 @@ class MainActivity : AppCompatActivity() {
                 launch {
                     viewModel.currentDate.collect { date ->
                         binding.tvDate.text = date.formatShortDate()
-                        updateDateButtons(date)
                     }
                 }
                 launch {
                     viewModel.startTime.collect { time ->
                         binding.etStartTime.setText(time?.formatTime() ?: "")
-                        updateTimeDisplay()
+                        updateCalculations()
                     }
                 }
                 launch {
                     viewModel.endTime.collect { time ->
                         binding.etEndTime.setText(time?.formatTime() ?: "")
-                        updateTimeDisplay()
+                        updateCalculations()
                     }
                 }
                 launch {
@@ -103,8 +123,8 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
                 launch {
-                    viewModel.autoCalculateBreak.collect { enabled ->
-                        binding.switchAutoBreak.isChecked = enabled
+                    viewModel.currentWeek.collect { week ->
+                        week?.let { updateWeekDistribution(it) }
                     }
                 }
                 launch {
@@ -114,35 +134,49 @@ class MainActivity : AppCompatActivity() {
                 }
                 launch {
                     viewModel.workTimeConfig.collect { config ->
-                        config?.let { updateConfigDisplay(it) }
+                        config?.let { updateLeaveSuggestion(it) }
                     }
                 }
             }
         }
     }
 
-    private fun updateTimeDisplay() {
+    private fun updateCalculations() {
         binding.tvDurationValue.text = viewModel.getCurrentDurationString()
-        binding.tvBreakWarning.visibility = if (viewModel.isBreakSufficient()) View.GONE else View.VISIBLE
+        updateLeaveSuggestion(viewModel.workTimeConfig.value)
     }
 
     private fun updateStats(stats: WorkDayRepository.WeekStats) {
         binding.tvTodayWorkedValue.text = stats.todayHours.formatHours()
-        binding.tvWeekWorkedValue.text = "${stats.totalHours.formatHours()} / ${38.5f.formatHours()}"
+        
+        val config = viewModel.workTimeConfig.value ?: return
+        binding.tvWeekWorkedValue.text = "${stats.totalHours.formatHours()} / ${config.weeklyTargetHours.formatHours()}"
         binding.tvRemainingValue.text = stats.remainingHours.formatHours()
         binding.progressBar.progress = stats.progressPercentage.toInt()
         binding.tvProgressText.text = "${stats.progressPercentage.toInt()}%"
+        
+        binding.tvSuggestedDaily.text = "Suggested daily: ${viewModel.getSuggestedDailyHours().formatHours()}"
     }
 
-    private fun updateConfigDisplay(config: WorkTimeConfig) {
-        val coreTime = config.coreTimes[viewModel.currentDate.value.dayOfWeek]
-        binding.tvKernzeitValue.text = coreTime?.let {
-            "${it.start?.formatTime() ?: "--"} - ${it.end?.formatTime() ?: "--"}"
-        } ?: "--"
+    private fun updateWeekDistribution(week: WorkWeek) {
+        val days = week.getSortedWorkDays()
+        
+        binding.tvMonHours.text = days.firstOrNull { it.date.dayOfWeek.value == 1 }?.effectiveHours?.formatHours() ?: "00:00"
+        binding.tvTueHours.text = days.firstOrNull { it.date.dayOfWeek.value == 2 }?.effectiveHours?.formatHours() ?: "00:00"
+        binding.tvWedHours.text = days.firstOrNull { it.date.dayOfWeek.value == 3 }?.effectiveHours?.formatHours() ?: "00:00"
+        binding.tvThuHours.text = days.firstOrNull { it.date.dayOfWeek.value == 4 }?.effectiveHours?.formatHours() ?: "00:00"
+        binding.tvFriHours.text = days.firstOrNull { it.date.dayOfWeek.value == 5 }?.effectiveHours?.formatHours() ?: "00:00"
     }
 
-    private fun updateDateButtons(date: LocalDate) {
-        binding.btnToday.isEnabled = date != LocalDate.now()
+    private fun updateLeaveSuggestion(config: WorkTimeConfig?) {
+        config ?: return
+        
+        val leaveTime = viewModel.getSuggestedLeaveTime()
+        if (leaveTime != null) {
+            binding.tvLeaveSuggestion.text = "Can leave at: ${leaveTime.formatTime()}"
+        } else {
+            binding.tvLeaveSuggestion.text = "Weekly target met!"
+        }
     }
 
     private fun showToast(message: String) {
