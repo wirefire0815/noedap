@@ -5,163 +5,388 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp"
-    tools:context=".MainActivity">
+    android:padding="0dp"
+    tools:context=".ui.main.MainActivity">
 
-    <TextView
-        android:id="@+id/tvTitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/app_name"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorSurface"
+        android:elevation="4dp"
+        app:layout_constraintTop_toTopOf="parent">
 
-    <!-- Today's work time -->
-    <TextView
-        android:id="@+id/tvTodayLabel"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:text="@string/today"
-        android:textSize="18sp"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvTitle" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/app_name"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+    </androidx.appcompat.widget.Toolbar>
 
-    <TextView
-        android:id="@+id/tvTodayWorked"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:text="00:00"
-        android:textSize="18sp"
-        app:layout_constraintBottom_toBottomOf="@id/tvTodayLabel"
-        app:layout_constraintLeft_toRightOf="@id/tvTodayLabel"
-        app:layout_constraintTop_toTopOf="@id/tvTodayLabel" />
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:fillViewport="true"
+        app:layout_constraintBottom_toTopOf="@+id/bottomNav"
+        app:layout_constraintTop_toBottomOf="@id/toolbar">
 
-    <!-- Week progress -->
-    <TextView
-        android:id="@+id/tvWeekLabel"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="@string/this_week"
-        android:textSize="18sp"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvTodayLabel" />
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="16dp">
 
-    <TextView
-        android:id="@+id/tvWeekWorked"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:text="00:00 / 38:30"
-        android:textSize="18sp"
-        app:layout_constraintBottom_toBottomOf="@id/tvWeekLabel"
-        app:layout_constraintLeft_toRightOf="@id/tvWeekLabel"
-        app:layout_constraintTop_toTopOf="@id/tvWeekLabel" />
+            <TextView
+                android:id="@+id/tvDate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Remaining time -->
-    <TextView
-        android:id="@+id/tvRemainingLabel"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="@string/remaining"
-        android:textSize="18sp"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvWeekLabel" />
+            <LinearLayout
+                android:id="@+id/dateNavigation"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tvDate">
 
-    <TextView
-        android:id="@+id/tvRemainingTime"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:text="38:30"
-        android:textSize="18sp"
-        app:layout_constraintBottom_toBottomOf="@id/tvRemainingLabel"
-        app:layout_constraintLeft_toRightOf="@id/tvRemainingLabel"
-        app:layout_constraintTop_toTopOf="@id/tvRemainingLabel" />
+                <Button
+                    android:id="@+id/btnDatePrev"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="←" />
 
-    <!-- Time input section -->
-    <TextView
-        android:id="@+id/tvInputLabel"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:text="@string/enter_hours"
-        android:textSize="18sp"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvRemainingLabel" />
+                <Button
+                    android:id="@+id/btnToday"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Today" />
 
-    <!-- Start time input -->
-    <TextView
-        android:id="@+id/tvStartLabel"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="@string/start_time"
-        android:textSize="16sp"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvInputLabel" />
+                <Button
+                    android:id="@+id/btnDateNext"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="→" />
+            </LinearLayout>
 
-    <EditText
-        android:id="@+id/etStartTime"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:hint="09:30"
-        android:inputType="time"
-        android:importantForAutofill="no"
-        app:layout_constraintLeft_toRightOf="@id/tvStartLabel"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="@id/tvStartLabel" />
+            <TextView
+                android:id="@+id/tvKernzeitLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Kernzeit:"
+                android:textSize="16sp"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/dateNavigation" />
 
-    <!-- End time input -->
-    <TextView
-        android:id="@+id/tvEndLabel"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="@string/end_time"
-        android:textSize="16sp"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/etStartTime" />
+            <TextView
+                android:id="@+id/tvKernzeitValue"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="09:30 - 16:00"
+                android:textSize="16sp"
+                app:layout_constraintBottom_toBottomOf="@id/tvKernzeitLabel"
+                app:layout_constraintLeft_toRightOf="@id/tvKernzeitLabel"
+                app:layout_constraintTop_toTopOf="@id/tvKernzeitLabel" />
 
-    <EditText
-        android:id="@+id/etEndTime"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:hint="16:00"
-        android:inputType="time"
-        android:importantForAutofill="no"
-        app:layout_constraintLeft_toRightOf="@id/tvEndLabel"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="@id/tvEndLabel" />
+            <TextView
+                android:id="@+id/tvTodayLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Today worked:"
+                android:textSize="18sp"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tvKernzeitLabel" />
 
-    <!-- Calculate button -->
-    <Button
-        android:id="@+id/btnCalculate"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:text="@string/calculate"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/etEndTime" />
+            <TextView
+                android:id="@+id/tvTodayWorkedValue"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="00:00"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                app:layout_constraintBottom_toBottomOf="@id/tvTodayLabel"
+                app:layout_constraintLeft_toRightOf="@id/tvTodayLabel"
+                app:layout_constraintTop_toTopOf="@id/tvTodayLabel" />
 
-    <!-- Break info -->
-    <TextView
-        android:id="@+id/tvBreakInfo"
-        android:layout_width="wrap_content"
+            <TextView
+                android:id="@+id/tvDurationLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Duration:"
+                android:textSize="16sp"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tvTodayLabel" />
+
+            <TextView
+                android:id="@+id/tvDurationValue"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="00:00"
+                android:textSize="16sp"
+                app:layout_constraintBottom_toBottomOf="@id/tvDurationLabel"
+                app:layout_constraintLeft_toRightOf="@id/tvDurationLabel"
+                app:layout_constraintTop_toTopOf="@id/tvDurationLabel" />
+
+            <TextView
+                android:id="@+id/tvBreakLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Break:"
+                android:textSize="16sp"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tvDurationLabel" />
+
+            <TextView
+                android:id="@+id/tvBreakValue"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="00:00"
+                android:textSize="16sp"
+                app:layout_constraintBottom_toBottomOf="@id/tvBreakLabel"
+                app:layout_constraintLeft_toRightOf="@id/tvBreakLabel"
+                app:layout_constraintTop_toTopOf="@id/tvBreakLabel" />
+
+            <TextView
+                android:id="@+id/tvBreakWarning"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Break insufficient!"
+                android:textColor="@color/red_500"
+                android:textSize="14sp"
+                android:visibility="gone"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tvBreakLabel" />
+
+            <TextView
+                android:id="@+id/tvAutoBreakLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Auto-calculate break"
+                android:textSize="16sp"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tvBreakWarning" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/switchAutoBreak"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                app:layout_constraintBottom_toBottomOf="@id/tvAutoBreakLabel"
+                app:layout_constraintLeft_toRightOf="@id/tvAutoBreakLabel"
+                app:layout_constraintTop_toTopOf="@id/tvAutoBreakLabel" />
+
+            <View
+                android:id="@+id/divider1"
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="24dp"
+                android:background="?attr/colorOutline"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/switchAutoBreak" />
+
+            <TextView
+                android:id="@+id/tvTimeInputLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Enter work times"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/divider1" />
+
+            <TextView
+                android:id="@+id/tvStartLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Start time"
+                android:textSize="16sp"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tvTimeInputLabel" />
+
+            <EditText
+                android:id="@+id/etStartTime"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:hint="Tap to select"
+                android:inputType="time"
+                android:focusable="false"
+                android:focusableInTouchMode="false"
+                app:layout_constraintLeft_toRightOf="@id/tvStartLabel"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toTopOf="@id/tvStartLabel" />
+
+            <TextView
+                android:id="@+id/tvEndLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="End time"
+                android:textSize="16sp"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/etStartTime" />
+
+            <EditText
+                android:id="@+id/etEndTime"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:hint="Tap to select"
+                android:inputType="time"
+                android:focusable="false"
+                android:focusableInTouchMode="false"
+                app:layout_constraintLeft_toRightOf="@id/tvEndLabel"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toTopOf="@id/tvEndLabel" />
+
+            <TextView
+                android:id="@+id/tvNotesLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Notes"
+                android:textSize="16sp"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/etEndTime" />
+
+            <EditText
+                android:id="@+id/etNotes"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Optional notes"
+                android:inputType="textMultiLine"
+                android:minLines="2"
+                android:maxLines="4"
+                app:layout_constraintTop_toBottomOf="@id/tvNotesLabel" />
+
+            <Button
+                android:id="@+id/btnCalculate"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Save"
+                app:layout_constraintTop_toBottomOf="@id/etNotes" />
+
+            <Button
+                android:id="@+id/btnDelete"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Delete entry"
+                android:textColor="@color/red_500"
+                app:layout_constraintTop_toBottomOf="@id/btnCalculate" />
+
+            <View
+                android:id="@+id/divider2"
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="24dp"
+                android:background="?attr/colorOutline"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/btnDelete" />
+
+            <TextView
+                android:id="@+id/tvWeekLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="This week"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/divider2" />
+
+            <TextView
+                android:id="@+id/tvWeekWorkedValue"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="00:00 / 38:30"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                app:layout_constraintBottom_toBottomOf="@id/tvWeekLabel"
+                app:layout_constraintLeft_toRightOf="@id/tvWeekLabel"
+                app:layout_constraintTop_toTopOf="@id/tvWeekLabel" />
+
+            <TextView
+                android:id="@+id/tvRemainingLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Remaining"
+                android:textSize="16sp"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tvWeekLabel" />
+
+            <TextView
+                android:id="@+id/tvRemainingValue"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="38:30"
+                android:textSize="16sp"
+                app:layout_constraintBottom_toBottomOf="@id/tvRemainingLabel"
+                app:layout_constraintLeft_toRightOf="@id/tvRemainingLabel"
+                app:layout_constraintTop_toTopOf="@id/tvRemainingLabel" />
+
+            <ProgressBar
+                android:id="@+id/progressBar"
+                style="@style/Widget.Material3.ProgressBar.Linear"
+                android:layout_width="match_parent"
+                android:layout_height="8dp"
+                android:layout_marginTop="16dp"
+                android:max="100"
+                android:progress="0"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tvRemainingLabel" />
+
+            <TextView
+                android:id="@+id/tvProgressText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="0%"
+                android:textAlignment="center"
+                android:textSize="14sp"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/progressBar" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </ScrollView>
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNav"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="@string/break_info"
-        android:textColor="?android:attr/textColorSecondary"
-        android:textSize="14sp"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/btnCalculate" />
+        android:background="?attr/colorSurface"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:menu="@menu/bottom_nav" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
