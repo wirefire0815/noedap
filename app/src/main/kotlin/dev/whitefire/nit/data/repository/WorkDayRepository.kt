@@ -2,11 +2,13 @@ package dev.whitefire.nit.data.repository
 
 import dev.whitefire.nit.data.local.WorkDayDao
 import dev.whitefire.nit.data.local.WorkDayEntity
+import dev.whitefire.nit.domain.model.WeekStats
 import dev.whitefire.nit.domain.model.WorkDay
 import dev.whitefire.nit.domain.model.WorkWeek
 import dev.whitefire.nit.util.toEntity
 import dev.whitefire.nit.util.toModel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -97,7 +99,7 @@ class WorkDayRepository private constructor(
      */
     suspend fun getTotalHoursInRange(start: LocalDate, end: LocalDate): Float {
         val workDays = workDayDao.getByDateRange(start, end)
-        return workDays.sumOf { it.toModel().effectiveHours }
+        return workDays.sumOf { it.toModel().effectiveHours.toDouble() }.toFloat()
     }
     
     /**
@@ -126,16 +128,6 @@ class WorkDayRepository private constructor(
         return workDayDao.exists(date) > 0
     }
     
-    data class WeekStats(
-        val totalHours: Float,
-        val remainingHours: Float,
-        val progressPercentage: Float,
-        val targetMet: Boolean,
-        val todayHours: Float,
-        val daysWorked: Int,
-        val totalDays: Int
-    )
-    
     companion object {
         @Volatile
         private var instance: WorkDayRepository? = null
@@ -150,18 +142,9 @@ class WorkDayRepository private constructor(
 
 // Extension functions for DAO to support Flow
 fun WorkDayDao.getAllFlow(): Flow<List<WorkDayEntity>> {
-    // This would typically use Room's Flow support, but for simplicity we'll use a wrapper
-    // In a real implementation, this would be:
-    // @Query("SELECT * FROM work_days ORDER BY date DESC")
-    // fun getAllFlow(): Flow<List<WorkDayEntity>>
-    // For now, we'll use a workaround
-    return kotlinx.coroutines.flow.Flow { 
-        emit(getAll())
-    }
+    return flow { emit(getAll()) }
 }
 
 fun WorkDayDao.getByWeekFlow(start: LocalDate, end: LocalDate): Flow<List<WorkDayEntity>> {
-    return kotlinx.coroutines.flow.Flow {
-        emit(getByWeek(start, end))
-    }
+    return flow { emit(getByWeek(start, end)) }
 }

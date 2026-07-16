@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.whitefire.nit.data.repository.UserPreferencesRepository
 import dev.whitefire.nit.data.repository.WorkDayRepository
+import dev.whitefire.nit.domain.model.WeekStats
 import dev.whitefire.nit.domain.model.WorkDay
 import dev.whitefire.nit.domain.model.WorkTimeConfig
 import dev.whitefire.nit.domain.model.WorkWeek
@@ -70,8 +71,8 @@ class MainViewModel(
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
     
     // Stats
-    private val _stats = MutableStateFlow<WorkDayRepository.WeekStats?>(null)
-    val stats: StateFlow<WorkDayRepository.WeekStats?> = _stats.asStateFlow()
+    private val _stats = MutableStateFlow<WeekStats?>(null)
+    val stats: StateFlow<WeekStats?> = _stats.asStateFlow()
     
     init {
         loadData()

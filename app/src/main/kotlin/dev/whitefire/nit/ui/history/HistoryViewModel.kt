@@ -40,14 +40,14 @@ class HistoryViewModel(
         }
     }
 
-    fun getWeekStats(workDays: List<WorkDay>): WeekStats {
-        val totalHours = workDays.sumOf { it.effectiveHours }
+    fun getWeekStats(workDays: List<WorkDay>): SimpleWeekStats {
+        val totalHours = workDays.sumOf { it.effectiveHours.toDouble() }.toFloat()
         val daysWorked = workDays.count { it.isComplete }
         val totalDays = workDays.size
-        return WeekStats(totalHours, daysWorked, totalDays)
+        return SimpleWeekStats(totalHours, daysWorked, totalDays)
     }
 
-    data class WeekStats(
+    data class SimpleWeekStats(
         val totalHours: Float,
         val daysWorked: Int,
         val totalDays: Int

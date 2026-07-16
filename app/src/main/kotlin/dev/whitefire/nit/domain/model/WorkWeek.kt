@@ -2,7 +2,6 @@ package dev.whitefire.nit.domain.model
 
 import java.time.DayOfWeek
 import java.time.LocalDate
-import java.time.YearWeek
 import java.time.temporal.WeekFields
 import java.util.Locale
 
@@ -10,21 +9,21 @@ import java.util.Locale
  * Represents a work week with its days and statistics
  */
 data class WorkWeek(
-    val yearWeek: YearWeek,
+    val startDate: LocalDate,
     val workDays: List<WorkDay> = emptyList(),
     val config: WorkTimeConfig = DEFAULT_WORK_CONFIG
 ) {
-    val startDate: LocalDate
-        get() = yearWeek.atDay(DayOfWeek.MONDAY)
-    
     val endDate: LocalDate
-        get() = yearWeek.atDay(DayOfWeek.SUNDAY)
+        get() = startDate.plusDays(6) // Monday + 6 days = Sunday
     
     val weekNumber: Int
-        get() = yearWeek.weekNumber
+        get() {
+            val weekFields = WeekFields.of(Locale.getDefault())
+            return startDate.get(weekFields.weekOfWeekBasedYear())
+        }
     
     val year: Int
-        get() = yearWeek.year
+        get() = startDate.year
     
     /**
      * Get work days for a specific day of week
@@ -45,14 +44,14 @@ data class WorkWeek(
      */
     val totalGrossHours: Float
         get() = workDays.sumOf { day ->
-            day.grossDuration?.toMinutes()?.toFloat()?.div(60f) ?: 0f
-        }
+            (day.grossDuration?.toMinutes()?.toFloat()?.div(60f) ?: 0f).toDouble()
+        }.toFloat()
     
     /**
      * Total net hours worked this week (with breaks)
      */
     val totalNetHours: Float
-        get() = workDays.sumOf { it.effectiveHours }
+        get() = workDays.sumOf { it.effectiveHours.toDouble() }.toFloat()
     
     /**
      * Remaining hours to reach target
@@ -130,8 +129,10 @@ data class WorkWeek(
         fun currentWeek(config: WorkTimeConfig = DEFAULT_WORK_CONFIG): WorkWeek {
             val today = LocalDate.now()
             val weekFields = WeekFields.of(Locale.getDefault())
-            val yearWeek = YearWeek.of(today.year, today.get(weekFields.weekOfWeekBasedYear()))
-            return WorkWeek(yearWeek, emptyList(), config)
+            val weekNumber = today.get(weekFields.weekOfWeekBasedYear())
+            // Find the Monday of the current week
+            val startDate = today.minusDays(today.dayOfWeek.value.toLong() - DayOfWeek.MONDAY.value.toLong())
+            return WorkWeek(startDate, emptyList(), config)
         }
         
         /**
@@ -139,8 +140,9 @@ data class WorkWeek(
          */
         fun fromDate(date: LocalDate, config: WorkTimeConfig = DEFAULT_WORK_CONFIG): WorkWeek {
             val weekFields = WeekFields.of(Locale.getDefault())
-            val yearWeek = YearWeek.of(date.year, date.get(weekFields.weekOfWeekBasedYear()))
-            return WorkWeek(yearWeek, emptyList(), config)
+            // Find the Monday of the week containing this date
+            val startDate = date.minusDays(date.dayOfWeek.value.toLong() - DayOfWeek.MONDAY.value.toLong())
+            return WorkWeek(startDate, emptyList(), config)
         }
         
         /**
@@ -148,8 +150,14 @@ data class WorkWeek(
          */
         fun fromYearWeek(year: Int, week: Int, config: WorkTimeConfig = DEFAULT_WORK_CONFIG): WorkWeek? {
             return try {
-                val yearWeek = YearWeek.of(year, week)
-                WorkWeek(yearWeek, emptyList(), config)
+                val weekFields = WeekFields.of(Locale.getDefault())
+                // Create a date for the first day of the year
+                val firstDay = LocalDate.of(year, 1, 1)
+                // Find the first Monday of the year
+                val firstMonday = firstDay.plusDays(((DayOfWeek.MONDAY.value - firstDay.dayOfWeek.value + 7) % 7).toLong())
+                // Add (week-1) weeks to get to the start of the desired week
+                val startDate = firstMonday.plusWeeks((week - 1).toLong())
+                WorkWeek(startDate, emptyList(), config)
             } catch (e: Exception) {
                 null
             }

@@ -1,17 +1,30 @@
 package dev.whitefire.nit.ui.main
 
 import android.os.Bundle
+import android.widget.Button
+import android.widget.EditText
+import android.widget.ProgressBar
+import android.widget.TextView
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import dev.whitefire.nit.NitApplication
-import dev.whitefire.nit.databinding.ActivityMainBinding
+import dev.whitefire.nit.R
+import dev.whitefire.nit.data.repository.UserPreferencesRepository
+import dev.whitefire.nit.data.repository.WorkDayRepository
+import dev.whitefire.nit.domain.model.WeekStats
+import dev.whitefire.nit.domain.model.WorkTimeConfig
+import dev.whitefire.nit.domain.model.WorkWeek
 import dev.whitefire.nit.ui.history.HistoryActivity
 import dev.whitefire.nit.ui.settings.SettingsActivity
 import dev.whitefire.nit.util.formatHours
 import dev.whitefire.nit.util.formatShortDate
+import dev.whitefire.nit.util.formatTime
+import dev.whitefire.nit.util.minutesToDisplayString
 import dev.whitefire.nit.util.showTimePicker
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -19,7 +32,6 @@ import java.time.LocalTime
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var binding: ActivityMainBinding
     private val viewModel: MainViewModel by viewModels {
         MainViewModelFactory(
             (application as NitApplication).workDayRepository,
@@ -27,65 +39,116 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
+    private lateinit var etStartTime: EditText
+    private lateinit var etEndTime: EditText
+    private lateinit var etNotes: EditText
+    private lateinit var btnCalculate: Button
+    private lateinit var btnDelete: Button
+    private lateinit var btnDeleteEntry: Button
+    private lateinit var btnDatePrev: Button
+    private lateinit var btnDateNext: Button
+    private lateinit var btnToday: Button
+    private lateinit var bottomNav: BottomNavigationView
+    private lateinit var tvDate: TextView
+    private lateinit var tvDurationValue: TextView
+    private lateinit var tvBreakValue: TextView
+    private lateinit var tvTodayWorkedValue: TextView
+    private lateinit var tvWeekWorkedValue: TextView
+    private lateinit var tvRemainingValue: TextView
+    private lateinit var progressBar: ProgressBar
+    private lateinit var tvProgressText: TextView
+    private lateinit var tvSuggestedDaily: TextView
+    private lateinit var tvLeaveSuggestion: TextView
+    private lateinit var tvMonHours: TextView
+    private lateinit var tvTueHours: TextView
+    private lateinit var tvWedHours: TextView
+    private lateinit var tvThuHours: TextView
+    private lateinit var tvFriHours: TextView
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        setContentView(R.layout.activity_main)
+
+        etStartTime = findViewById(R.id.etStartTime)
+        etEndTime = findViewById(R.id.etEndTime)
+        etNotes = findViewById(R.id.etNotes)
+        btnCalculate = findViewById(R.id.btnCalculate)
+        btnDelete = findViewById(R.id.btnDelete)
+        btnDeleteEntry = findViewById(R.id.btnDeleteEntry)
+        btnDatePrev = findViewById(R.id.btnDatePrev)
+        btnDateNext = findViewById(R.id.btnDateNext)
+        btnToday = findViewById(R.id.btnToday)
+        bottomNav = findViewById(R.id.bottomNav)
+        tvDate = findViewById(R.id.tvDate)
+        tvDurationValue = findViewById(R.id.tvDurationValue)
+        tvBreakValue = findViewById(R.id.tvBreakValue)
+        tvTodayWorkedValue = findViewById(R.id.tvTodayWorkedValue)
+        tvWeekWorkedValue = findViewById(R.id.tvWeekWorkedValue)
+        tvRemainingValue = findViewById(R.id.tvRemainingValue)
+        progressBar = findViewById(R.id.progressBar)
+        tvProgressText = findViewById(R.id.tvProgressText)
+        tvSuggestedDaily = findViewById(R.id.tvSuggestedDaily)
+        tvLeaveSuggestion = findViewById(R.id.tvLeaveSuggestion)
+        tvMonHours = findViewById(R.id.tvMonHours)
+        tvTueHours = findViewById(R.id.tvTueHours)
+        tvWedHours = findViewById(R.id.tvWedHours)
+        tvThuHours = findViewById(R.id.tvThuHours)
+        tvFriHours = findViewById(R.id.tvFriHours)
 
         setupViews()
         setupObservers()
     }
 
     private fun setupViews() {
-        binding.etStartTime.setOnClickListener {
-            it.showTimePicker(this, viewModel.startTime.value ?: LocalTime.of(9, 30)) { time ->
+        etStartTime.setOnClickListener {
+            etStartTime.showTimePicker(this, viewModel.startTime.value ?: LocalTime.of(9, 30)) { time ->
                 viewModel.setStartTime(time)
                 updateCalculations()
             }
         }
 
-        binding.etEndTime.setOnClickListener {
-            it.showTimePicker(this, viewModel.endTime.value ?: LocalTime.of(16, 0)) { time ->
+        etEndTime.setOnClickListener {
+            etEndTime.showTimePicker(this, viewModel.endTime.value ?: LocalTime.of(16, 0)) { time ->
                 viewModel.setEndTime(time)
                 updateCalculations()
             }
         }
 
-        binding.btnCalculate.setOnClickListener {
+        btnCalculate.setOnClickListener {
             viewModel.saveWorkDay()
             showToast("Saved")
         }
 
-        binding.btnDelete.setOnClickListener {
+        btnDelete.setOnClickListener {
             viewModel.setStartTime(null)
             viewModel.setEndTime(null)
             viewModel.setBreakMinutes(0)
-            binding.etNotes.setText("")
+            etNotes.setText("")
             showToast("Cleared")
         }
 
-        binding.btnDeleteEntry.setOnClickListener {
+        btnDeleteEntry.setOnClickListener {
             viewModel.deleteWorkDay()
             showToast("Deleted")
         }
 
-        binding.btnDatePrev.setOnClickListener {
+        btnDatePrev.setOnClickListener {
             viewModel.setDate(viewModel.currentDate.value.minusDays(1))
         }
 
-        binding.btnDateNext.setOnClickListener {
+        btnDateNext.setOnClickListener {
             viewModel.setDate(viewModel.currentDate.value.plusDays(1))
         }
 
-        binding.btnToday.setOnClickListener {
+        btnToday.setOnClickListener {
             viewModel.setDate(LocalDate.now())
         }
 
-        binding.etNotes.addTextChangedListener { text ->
+        etNotes.addTextChangedListener { text ->
             viewModel.setNotes(text.toString())
         }
 
-        binding.bottomNav.setOnItemSelectedListener { item ->
+        bottomNav.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.nav_main -> true
                 R.id.nav_history -> {
@@ -106,30 +169,30 @@ class MainActivity : AppCompatActivity() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch {
                     viewModel.currentDate.collect { date ->
-                        binding.tvDate.text = date.formatShortDate()
+                        tvDate.text = date.formatShortDate()
                     }
                 }
                 launch {
                     viewModel.startTime.collect { time ->
-                        binding.etStartTime.setText(time?.formatTime() ?: "")
+                        etStartTime.setText(time?.formatTime() ?: "")
                         updateCalculations()
                     }
                 }
                 launch {
                     viewModel.endTime.collect { time ->
-                        binding.etEndTime.setText(time?.formatTime() ?: "")
+                        etEndTime.setText(time?.formatTime() ?: "")
                         updateCalculations()
                     }
                 }
                 launch {
                     viewModel.breakMinutes.collect { minutes ->
-                        binding.tvBreakValue.text = minutes.minutesToDisplayString()
+                        tvBreakValue.text = minutes.minutesToDisplayString()
                     }
                 }
                 launch {
                     viewModel.notes.collect { notes ->
-                        if (binding.etNotes.text.toString() != notes) {
-                            binding.etNotes.setText(notes)
+                        if (etNotes.text.toString() != notes) {
+                            etNotes.setText(notes)
                         }
                     }
                 }
@@ -149,7 +212,6 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
                 launch {
-                    // Update leave suggestion when week changes
                     viewModel.currentWeek.collect {
                         updateLeaveSuggestion(viewModel.workTimeConfig.value)
                     }
@@ -159,40 +221,40 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateCalculations() {
-        binding.tvDurationValue.text = viewModel.getCurrentDurationString()
+        tvDurationValue.text = viewModel.getCurrentDurationString()
         updateLeaveSuggestion(viewModel.workTimeConfig.value)
     }
 
-    private fun updateStats(stats: WorkDayRepository.WeekStats) {
-        binding.tvTodayWorkedValue.text = stats.todayHours.formatHours()
-        
+    private fun updateStats(stats: WeekStats) {
+        tvTodayWorkedValue.text = stats.todayHours.formatHours()
+
         val config = viewModel.workTimeConfig.value ?: return
-        binding.tvWeekWorkedValue.text = "${stats.totalHours.formatHours()} / ${config.weeklyTargetHours.formatHours()}"
-        binding.tvRemainingValue.text = stats.remainingHours.formatHours()
-        binding.progressBar.progress = stats.progressPercentage.toInt()
-        binding.tvProgressText.text = "${stats.progressPercentage.toInt()}%"
-        
-        binding.tvSuggestedDaily.text = "Suggested daily: ${viewModel.getSuggestedDailyHours().formatHours()}"
+        tvWeekWorkedValue.text = "${stats.totalHours.formatHours()} / ${config.weeklyTargetHours.formatHours()}"
+        tvRemainingValue.text = stats.remainingHours.formatHours()
+        progressBar.progress = stats.progressPercentage.toInt()
+        tvProgressText.text = "${stats.progressPercentage.toInt()}%"
+
+        tvSuggestedDaily.text = "Suggested daily: ${viewModel.getSuggestedDailyHours().formatHours()}"
     }
 
     private fun updateWeekDistribution(week: WorkWeek) {
         val days = week.getSortedWorkDays()
-        
-        binding.tvMonHours.text = days.firstOrNull { it.date.dayOfWeek.value == 1 }?.effectiveHours?.formatHours() ?: "00:00"
-        binding.tvTueHours.text = days.firstOrNull { it.date.dayOfWeek.value == 2 }?.effectiveHours?.formatHours() ?: "00:00"
-        binding.tvWedHours.text = days.firstOrNull { it.date.dayOfWeek.value == 3 }?.effectiveHours?.formatHours() ?: "00:00"
-        binding.tvThuHours.text = days.firstOrNull { it.date.dayOfWeek.value == 4 }?.effectiveHours?.formatHours() ?: "00:00"
-        binding.tvFriHours.text = days.firstOrNull { it.date.dayOfWeek.value == 5 }?.effectiveHours?.formatHours() ?: "00:00"
+
+        tvMonHours.text = days.firstOrNull { it.date.dayOfWeek.value == 1 }?.effectiveHours?.formatHours() ?: "00:00"
+        tvTueHours.text = days.firstOrNull { it.date.dayOfWeek.value == 2 }?.effectiveHours?.formatHours() ?: "00:00"
+        tvWedHours.text = days.firstOrNull { it.date.dayOfWeek.value == 3 }?.effectiveHours?.formatHours() ?: "00:00"
+        tvThuHours.text = days.firstOrNull { it.date.dayOfWeek.value == 4 }?.effectiveHours?.formatHours() ?: "00:00"
+        tvFriHours.text = days.firstOrNull { it.date.dayOfWeek.value == 5 }?.effectiveHours?.formatHours() ?: "00:00"
     }
 
     private fun updateLeaveSuggestion(config: WorkTimeConfig?) {
         config ?: return
-        
+
         val leaveTime = viewModel.getSuggestedLeaveTime()
         if (leaveTime != null) {
-            binding.tvLeaveSuggestion.text = "Can leave at: ${leaveTime.formatTime()}"
+            tvLeaveSuggestion.text = "Can leave at: ${leaveTime.formatTime()}"
         } else {
-            binding.tvLeaveSuggestion.text = "Weekly target met!"
+            tvLeaveSuggestion.text = "Weekly target met!"
         }
     }
 
