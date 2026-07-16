@@ -10,10 +10,10 @@ dependencyResolutionManagement {
 rootProject.name = "nit"
 
 pluginManagement {
-    includeBuild("gradle")
     repositories {
         google()
         mavenCentral()
         gradlePluginPortal()
     }
 }
+ 
